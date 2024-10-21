@@ -32,7 +32,7 @@ ui <- page_sidebar(
                             "Minimum" = "min")),
     hr(),
     # Adding logo to the sidebar
-    img(src = "https://www.schielandendekrimpenerwaard.nl/publish/pages/1/logo-hhsk.png", width = "100%")
+    img(src = "logo_website.png", width = "100%")
   ),
   layout_column_wrap(
     width = 1/2,
