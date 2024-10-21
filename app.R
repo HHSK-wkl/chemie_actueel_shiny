@@ -4,62 +4,64 @@ library(HHSKwkl)
 library(leaflet)
 library(glue)
 library(sf)
+library(bslib)
 
-# options(OutDec = ",")
-
-# source("R/data_online.R")
+# Load data
 ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
 
-url_csv <- function(mp) paste0('<a href = "https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/meetgegevens/', mp, '.csv">Meetgegevens</a>')
-url_pdf <- function(mp) paste0('<a href = "https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/grafieken/', mp, '.pdf">Grafieken</a>')
+# Helper functions
+url_csv <- function(mp) paste0('<a href="https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/meetgegevens/', mp, '.csv">Meetgegevens</a>')
+url_pdf <- function(mp) paste0('<a href="https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/grafieken/', mp, '.pdf">Grafieken</a>')
 
-
-
-# Define UI 
-ui <- fluidPage(
-  # Application title
-  
-  titlePanel( 
-    div(column(width = 3, tags$img(src = "logo_website.png", height = "60px")), 
-        column(width = 9, h2("Actuele waterkwaliteit", style = "color: #0079C2; font-weight: bold"))),
-    windowTitle = "HHSK - Actuele waterkwaliteit"
+# Define UI
+ui <- page_sidebar(
+  title = "HHSK - Actuele waterkwaliteit",
+  theme = bs_theme(version = 5, bootswatch = "cerulean"),
+  sidebar = sidebar(
+    width = 350,
+    dateRangeInput("datum_sel", "Periode", language = "nl", separator = "t/m", start = Sys.Date() - 31, format = "dd-mm-yyyy"),
+    selectInput("param_sel", "Parameter", choices = c("Chloride" = 1)),
+    selectInput("param_group", "Parametergroep (optioneel)", multiple = TRUE,
+                choices = list("Algemeen", "Bacteriologie", "Bestrijdingsmiddelen", "Blauwalgen", 
+                               "Metalen opgelost", "Metalen totaal", "Organisch", "Zintuiglijk")),
+    selectInput("agg_fun", "Waardebewerkingsmethode", 
+                choices = c("Gemiddelde" = "mean",
+                            "Laatste" = "first",
+                            "Mediaan" = "median",
+                            "Maximum" = "max",
+                            "Minimum" = "min")),
+    hr(),
+    # Adding logo to the sidebar
+    img(src = "https://www.schielandendekrimpenerwaard.nl/publish/pages/1/logo-hhsk.png", width = "100%")
   ),
-  
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel(
-      dateRangeInput("datum_sel", "Periode", language = "nl", separator = "t/m", start = Sys.Date() - 31, format = "dd-mm-yyyy"),
-      selectInput("param_sel", "Parameter", choices = c("Chloride" = 1)),
-      selectInput("param_group", "Parametergroep (optioneel)", multiple = TRUE,
-                         choices = list("Algemeen", "Bacteriologie", "Bestrijdingsmiddelen", "Blauwalgen", 
-                                        "Metalen opgelost", "Metalen totaal", "Organisch", "Zintuiglijk")),
-      selectInput("agg_fun", "Waardebewerkingsmethode", choices = c("Gemiddelde" = "mean",
-                                                                    "Laatste" = "first", #sorteervolgorde is achterstevoren
-                                                                   "Mediaan" = "median",
-                                                                   "Maximum" = "max",
-                                                                   "Minimum" = "min")),
-      h3("Toelichting"),
-      p("De kaart laat de meetpunten zien waar in de gekozen periode metingen van de gekozen parameter beschikbaar zijn.
-        De kleuren geven de waarde aan volgens de gekozen bewerkingsmethode. De kleuren zijn niet lineair verdeeld,
-        maar geven de volgende intervallen: 0% - 1% - 5% - 10% - 30% - 70% - 90% - 95% - 99% - 100%."),
-      p("De eerste grafiek toont de metingen (onbewerkt) vanaf 2010 van het meetpunt dat op de kaart wordt aangeklikt."),
-      p("De tweede grafiek is een histogram met alle metingen (onbewerkt) van de gekozen periode en parameters."),
-      
-      width = 3
+  layout_column_wrap(
+    width = 1/2,
+    card(
+      full_screen = TRUE,
+      card_header("Kaart"),
+      leafletOutput("kaart", height = "700px")
     ),
-    
-    mainPanel(
-      leafletOutput("kaart", height = "500px"),
-      plotOutput("grafiek_loc", height = "500px"),
-      plotOutput("histogram", height = "350px", width = "600px"),
-      
-      width = 9
+    layout_column_wrap(
+      width = 1,
+      card(
+        full_screen = TRUE,
+        card_header("Grafiek per locatie"),
+        plotOutput("grafiek_loc", height = "350px")
+      ),
+      card(
+        full_screen = TRUE,
+        card_header("Toelichting"),
+        p("De kaart laat de meetpunten zien waar in de gekozen periode metingen van de gekozen parameter beschikbaar zijn.
+          De kleuren geven de waarde aan volgens de gekozen bewerkingsmethode. De kleuren zijn niet lineair verdeeld,
+          maar geven de volgende intervallen: 0% - 1% - 5% - 10% - 30% - 70% - 90% - 95% - 99% - 100%."),
+        p("De grafiek toont de metingen (onbewerkt) vanaf 2010 van het meetpunt dat op de kaart wordt aangeklikt.")
+      )
     )
   )
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output) {
+# Define server logic
+server <- function(input, output, session) {
   
   meetpunten <- data_online("meetpunten.rds")
   parameters <- data_online("parameters.rds")
@@ -117,7 +119,6 @@ server <- function(input, output) {
   
   # Update parameterselectie
   observe({
-    
     parnrs <- fys_chem_per() %>% pull(parnr) %>% unique() %>% sort()
     
     parnamen <- parameters %>% filter(parnr %in% parnrs) 
@@ -137,7 +138,6 @@ server <- function(input, output) {
   })
   
   observe({
-    
     agg_fun <- eval(sym(input$agg_fun))
     
     data_leaflet <- meetpunten_leaflet %>% 
@@ -145,7 +145,6 @@ server <- function(input, output) {
       group_by(mp) %>% 
       arrange(desc(datum)) %>% 
       summarise(detectiegrens = ifelse(any(is.na(detectiegrens)), "", paste0(first(detectiegrens), " ")),
-                # popup_tekst = glue_collapse(na.omit(glue("{datum} -- {detectiegrens} {waarde} {f_eenheid(input$param_sel)}")[1:12]), sep = "<br>"),
                 popup_tekst = glue("<b>Meetpunt:</b> {first(mp)}<br><b>Parameter:</b> {f_parnaam(input$param_sel)}<br><br>{url_pdf(first(mp))}<br><br>{url_csv(first(mp))}"),
                 waarde = agg_fun(waarde)) %>% 
       ungroup() %>% 
@@ -157,7 +156,6 @@ server <- function(input, output) {
     pal <- colorBin("RdBu", domain = NULL, bins = f_bins(data_leaflet$waarde), reverse = rev_switch)
     
     if(nrow(data_leaflet) > 0){
-      
       leafletProxy("kaart", data = data_leaflet) %>% 
         leaflet::removeControl("legenda") %>% 
         leaflet::clearMarkers() %>% 
@@ -168,39 +166,19 @@ server <- function(input, output) {
                   labFormat = labelFormat(suffix = glue(" {f_eenheid(input$param_sel)}")),
                   layerId = "legenda")
     } else {
-      
       leafletProxy("kaart") %>% 
         leaflet::removeControl("legenda") %>% 
         leaflet::clearMarkers()
     }
   })
   
-  output$histogram <- renderPlot({
-    plot <- 
-      fys_chem_sel() %>% 
-      ggplot(aes(waarde)) + 
-      geom_histogram(fill = grijs) +
-      scale_y_continuous(limits = c(0, NA), expand = expansion(c(0, 0.1))) +
-      labs(title = glue("Histogram van {f_parnaam(input$param_sel)}"),
-           subtitle = glue("Alle metingen van {input$datum_sel[1]} tot en met {input$datum_sel[2]}"),
-           x = f_eenheid(input$param_sel),
-           y = "aantal") +
-      hhskthema() 
-    
-    plot
-  })
-  
-  
- 
   output$grafiek_loc <- renderPlot({
-    
     fys_chem %>%
       filter(mp == mp_sel(), parnr == input$param_sel, datum >= lubridate::ymd(20100101) ) %>%
       grafiek_basis(mp = glue("{mp_sel()}"),
                     mpomsch = f_mpomsch(mp_sel()),
                     parnaam = f_parnaam(input$param_sel),
                     eenheid = f_eenheid(input$param_sel))
-    
   })
   
 }
