@@ -1,6 +1,9 @@
 library(shiny)
-library(tidyverse)
-library(HHSKwkl)
+# library(tidyverse)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+# library(HHSKwkl)
 library(leaflet)
 library(glue)
 library(sf)
@@ -8,6 +11,16 @@ library(bslib)
 
 # Load data
 ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
+
+# blauw    <- colorspace::hex(colorspace::colorspace::HLS(202.5, 0.38, 1))
+# blauw_m  <- colorspace::hex(colorspace::HLS(202.5, 0.60, 1))
+# blauw_l  <- colorspace::hex(colorspace::HLS(202.5, 0.80, 1))
+# oranje   <- colorspace::hex(colorspace::HLS(25   , 0.38, 1))
+# oranje_m <- colorspace::hex(colorspace::HLS(25   , 0.60, 1))
+# oranje_l <- colorspace::hex(colorspace::HLS(25   , 0.80, 1))
+# grijs    <- "#616161"
+# grijs_m  <- "#999999"
+# grijs_l  <- "#cccccc"
 
 # Helper functions
 url_csv <- function(mp) paste0('<a href="https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/meetgegevens/', mp, '.csv">Meetgegevens</a>')
@@ -67,10 +80,11 @@ server <- function(input, output, session) {
   parameters <- data_online("parameters.rds")
   fys_chem <- data_online("fys_chem.rds") %>% semi_join(filter(meetpunten, meetpunttypering %in% c(1, 2, 3, 5, 12)))
   
+  shiny::updateDateRangeInput(inputId = "datum_sel", start = Sys.Date() - 31)
+  
   meetpunten_leaflet <- meetpunten %>% 
     select(mp, x, y) %>% 
     sf::st_as_sf(coords = c("x", "y"), crs = 28992) %>% 
-    add_lat_long() %>% 
     sf::st_transform(crs = 4326)
   
   f_parnaam <- maak_opzoeker(parameters, parnr, parnaamlang)
