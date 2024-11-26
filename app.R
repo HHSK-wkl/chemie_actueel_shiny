@@ -3,7 +3,7 @@ library(shiny)
 library(dplyr)
 library(tibble)
 library(ggplot2)
-# library(HHSKwkl)
+library(HHSKwkl)
 library(leaflet)
 library(glue)
 library(sf)
@@ -80,7 +80,7 @@ server <- function(input, output, session) {
   parameters <- data_online("parameters.rds")
   fys_chem <- data_online("fys_chem.rds") %>% semi_join(filter(meetpunten, meetpunttypering %in% c(1, 2, 3, 5, 12)))
   
-  shiny::updateDateRangeInput(inputId = "datum_sel", start = Sys.Date() - 31)
+  # shiny::updateDateRangeInput(inputId = "datum_sel", start = Sys.Date() - 31)
   
   meetpunten_leaflet <- meetpunten %>% 
     select(mp, x, y) %>% 
