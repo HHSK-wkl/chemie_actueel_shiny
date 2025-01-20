@@ -1,2 +1,2 @@
 # chemie_actueel_shiny
-Actuele data chemie
+Actuele data chemie op een dashboard
