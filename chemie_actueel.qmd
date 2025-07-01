@@ -23,27 +23,18 @@ library(leaflet)
 library(glue)
 library(sf)
 
-# options(OutDec = ",")
-
-# source("R/data_online.R")
 ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
-
-# url_csv <- function(mp) paste0('<a href = "https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/meetgegevens/', mp, '.csv">Meetgegevens</a>')
-# url_pdf <- function(mp) paste0('<a href = "https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/grafieken/', mp, '.pdf">Grafieken</a>')
 
 url_actuele_metingen <- 
   function(mp) paste0('<a href="https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/', mp, '.html" target="_blank">Meetgegevens meetpunt ', mp,'</a>')
 
-
 ```
-
 
 # Overzicht
 
 ## {.sidebar width=20%}
 
 ```{r}
-
 dateRangeInput("datum_sel", "Periode", language = "nl", separator = "t/m", format = "dd-mm-yyyy")
 
 selectInput("param_sel", "Parameter", choices = c("Chloride" = 1))
@@ -81,8 +72,6 @@ plotOutput("grafiek_loc")
 plotOutput("histogram")
 ```
 
-
-
 # Meetpunt
 
 `r textOutput("meetpunt_sel")`
@@ -91,8 +80,8 @@ plotOutput("histogram")
 ```{r}
 #| context: server
 
-updateDateRangeInput(inputId = "datum_sel", start = floor_date(Sys.Date() - 40, "months"), end = Sys.Date())
 
+updateDateRangeInput(inputId = "datum_sel", start = floor_date(Sys.Date() - 40, "months"), end = Sys.Date())
 
 id_laad_data <- showNotification("Data wordt geladen", duration = NULL)
 
@@ -129,28 +118,10 @@ removeNotification(id_laad_data)
 
 fys_chem_per <- reactive({fys_chem %>% filter(datum >= input$datum_sel[1], datum <= input$datum_sel[2])})
 fys_chem_sel <- reactive({fys_chem_per() %>% filter(parnr == input$param_sel)})
+
 mp_sel <- reactive({
   req(input$kaart_marker_click)
-  # if (!is.null(input$kaart_marker_click)){
-    
-    # punt <- 
-    #   st_sfc(
-    #     st_point(c(input$kaart_marker_click[[4]], 
-    #                input$kaart_marker_click[[3]])), 
-    #     crs = 4326)
-    # 
-    # mp_op_kaart <- 
-    #   meetpunten_leaflet %>% 
-    #   inner_join(fys_chem_sel(), by = "mp")
-    
-    mp_sel <- input$kaart_marker_click$id
-      # mp_op_kaart %>% 
-      # .[[st_nearest_feature(punt, mp_op_kaart), 1]]
-    
-  # } else {
-    # mp_sel <- "XXXX"
-  # }
-  # mp_sel
+  mp_sel <- input$kaart_marker_click$id
 })
 
 # Update parameterselectie
