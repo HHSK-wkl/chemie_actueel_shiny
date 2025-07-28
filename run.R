@@ -1,5 +1,5 @@
 library(shiny)
 setwd("C:/R/chemie_actueel_shiny")
 # quarto::quarto_run("chemie_actueel.qmd")
-# quarto::quarto_serve("chemie_actueel.qmd", render = FALSE)
-runApp(launch.browser = TRUE)
+quarto::quarto_serve("chemie_actueel.qmd", render = FALSE)
+# runApp(launch.browser = TRUE)
