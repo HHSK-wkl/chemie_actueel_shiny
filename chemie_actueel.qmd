@@ -22,6 +22,7 @@ library(HHSKwkl)
 library(leaflet)
 library(glue)
 library(sf)
+library(reactable)
 
 ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
 
@@ -52,25 +53,37 @@ selectInput("agg_fun", "Waardebewerkingsmethode",
 
 ```
 
-## Kaart {width="60%"}
+## {.tabset width="60%"}
+
+### Kaart {}
 
 ```{r}
 leafletOutput("kaart")
 ```
 
-##
+### Tabel {}
 
-### Meetreeks
+```{r}
+reactableOutput("tabel_metingen")
+```
+
+## {width="40%"}
+
+###
+
+#### Meetreeks
 
 ```{r}
 plotOutput("grafiek_loc")
 ```
 
-### Histogram
+#### Histogram
 
 ```{r}
 plotOutput("histogram")
 ```
+
+
 
 # Meetpunt
 
@@ -217,5 +230,41 @@ output$grafiek_loc <- renderPlot({
 })
 
 output$meetpunt_sel <- renderText({mp_sel()})
+
+output$tabel_metingen <- renderReactable({
+  
+  reactable_agg <- ifelse(input$agg_fun %in% c("mean", "median", "min", "max"), input$agg_fun, "mean")
+  
+  waarde_agg <- 
+  c("max" = "maximum",
+  "min" = "minimum",
+  "median" = "mediaan",
+  "mean" = "gemiddelde")[reactable_agg]
+  
+  waarde_agg <- glue("Meetwaarde {f_eenheid(input$param_sel)} ({waarde_agg})")
+  
+  tabel_metingen <- 
+    fys_chem_sel() |> 
+    # mutate("Aantal metingen" = n(), .by = "mp") |> 
+    mutate("Parameter" = f_parnaam(parnr)) |> 
+    
+    select(mp, Parameter, Datum = datum, Detectiegrens = detectiegrens, waarde) |> 
+    reactable(
+          filterable = TRUE, 
+          searchable = TRUE,
+          onClick = "expand", 
+          defaultPageSize = 20,
+          showPageSizeOptions = TRUE,
+          outlined = TRUE,
+          groupBy = "mp",
+          compact = TRUE,
+          columns = list(
+            mp = colDef("Meetpunt"),
+            waarde = colDef(waarde_agg, aggregate = reactable_agg, filterable = FALSE, format = colFormat(digits = 2))
+            # `Aantal meetlocaties` = colDef(aggregate = "max", filterable = FALSE)
+          ))
+  tabel_metingen
+})
+
 ```
 
