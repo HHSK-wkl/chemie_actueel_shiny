@@ -1,0 +1,15 @@
+name: chemie_actueel
+title: chemie_actueel
+username: hhsk
+account: hhsk
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5305594
+bundleId: 12265647
+url: https://hhsk.shinyapps.io/chemie_actueel/
+version: 1
+quarto_version: 1.9.38
+quarto_engines: knitr
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: chemie_actueel_animate.qmd|chemie_actueel_shiny.bat|oud/app.R|oud/app_local.R|oud/app_to_shinylive.R|oud/functies.R|README.md|run.R
