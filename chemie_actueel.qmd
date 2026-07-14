@@ -24,7 +24,7 @@ library(glue)
 library(sf)
 library(reactable)
 
-ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
+# ws_grens <- sf::st_read("data/ws_grens.gpkg") %>% sf::st_transform(crs = 4326)
 
 url_actuele_metingen <- 
   function(mp) paste0('<a href="https://www.schielandendekrimpenerwaard.nl/kaart/waterkwaliteit/wkl_gegevens_op_kaart/', mp, '.html" target="_blank">Meetgegevens meetpunt ', mp,'</a>')
@@ -156,7 +156,7 @@ observe({
 
 output$kaart <- renderLeaflet({
   basiskaart() %>% 
-    addPolylines(data = ws_grens, color = "grey", opacity = 1, weight = 2) %>% 
+    addPolylines(data = ws_grens_wgs, color = "grey", opacity = 1, weight = 2) %>% 
     leaflet.extras::addFullscreenControl()
 })
 
